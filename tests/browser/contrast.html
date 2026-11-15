@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>contrast</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script src="contrast.js"></script>
+<script>
+// Text contrast in the default theme: 4.5 to 1, or 3 to 1 for large text. Text inside poster SVGs is covered by the palette rules.
+// Text over a gradient cannot be measured against one colour. Each such row is a manual check, reported with its lowest ratio over the gradient stops, and must be listed here with the reason it is accepted.
+const MANUAL = {
+  'span.mt.m-white.o-l': 'the white mount has faint 5 percent black stripes over its solid colour, and the lowest ratio over the stripe stops is measured',
+  'div.tb-frame': 'the table frame is a dark vertical gradient, and the lowest ratio over both stops is measured',
+  'div.scr-body#scr-body': 'the screen fabric is a dark radial gradient, and the lowest ratio over both stops is measured',
+  'div.projector#projector': 'the projector body gradient has a bright highlight band in the top 10px only, so the label at the foot is measured against --projector-body',
+};
+// Measured against a token instead of the stop floor, because the gradient stop that fails is not where the text sits.
+const AGAINST = { 'div.pj-name': { selector: '.pj-name', token: '--projector-body' } };
+
+H.run('contrast', async (t) => {
+  const site = await t.site();
+  // Any collection will do, because the content decides which items have an image and which a poster.
+  const first = (want) => { for (const col of site.collections) { const it = col.items.find(want); if (it) return '/' + col.id + '/' + it.id + '/?still=1'; } return null; };
+  const img = first((i) => i.image), poster = first((i) => i.poster);
+  t.check('the content has an item with an image or a poster to open', Boolean(img || poster));
+  const scenes = [
+    ['table', '/?still=1', false],
+    ...(img ? [['open image item', img, true]] : []),
+    ...(poster ? [['open poster item', poster, true]] : []),
+    ['not found note', '/nope/?still=1', false],
+    ['open collections menu', '/?still=1', 'menu'],
+  ];
+  const { parse, over, ratio } = window.contrastMath;
+  for (const [label, path, open] of scenes) {
+    const c = await t.load(path);
+    if (open === 'menu') { c.$('.cu-menu-btn').click(); await t.sleep(300); } else if (open) { await t.waitFor(c.isOpen, 15000); await t.sleep(600); }
+    if (c.d.fonts) await c.d.fonts.ready;
+    const rows = window.scanContrast(c.w);
+    const bad = [], unlisted = [];
+    rows.forEach((r) => {
+      const where = r.el + ' "' + r.text + '" ' + r.fg + ' on ' + r.bg + ' = ' + r.ratio + ' (need ' + r.need + ')';
+      let value = r.ratio;
+      if (r.manual) {
+        const host = r.manual.split(' on ').pop();
+        if (!MANUAL[host]) { unlisted.push(where + ' over ' + host); return; }
+        const own = AGAINST[r.el];
+        if (own) {
+          const base = parse(c.w.getComputedStyle(c.d.documentElement).getPropertyValue(own.token).trim());
+          value = ratio(over(parse(c.w.getComputedStyle(c.$(own.selector)).color), base), base);
+        }
+      }
+      if (value >= r.need) return;
+      bad.push(where);
+    });
+    t.check(label + ': ' + rows.length + ' text styles scanned', rows.length > 3, rows.length);
+    t.check(label + ': every pair meets 4.5 to 1, or 3 to 1 for large text', bad.length === 0, bad.join(' | '));
+    t.check(label + ': every manual check is listed with a reason', unlisted.length === 0, unlisted.join(' | '));
+  }
+});
+</script>
+</body></html>

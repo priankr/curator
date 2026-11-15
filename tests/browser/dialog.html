@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>dialog</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// The open screen is a modal dialog named by the item title, and paging announces the new slide through a polite live region.
+H.run('dialog', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const items = col.items, n = items.length;
+  const c = await t.load('/' + col.id + '/' + items[0].id + '/?still=1');
+  t.check('the booth is open', await t.waitFor(c.isOpen, 15000), 'hidden=' + c.booth().hidden);
+  const b = c.booth();
+  t.check('role dialog', b.getAttribute('role') === 'dialog', b.getAttribute('role'));
+  t.check('aria-modal is true', b.getAttribute('aria-modal') === 'true', b.getAttribute('aria-modal'));
+  const label = c.d.getElementById(b.getAttribute('aria-labelledby'));
+  t.check('aria-labelledby points to an element that exists', !!label, b.getAttribute('aria-labelledby'));
+  t.check('that element holds the item title', !!label && label.textContent === items[0].title, label && label.textContent);
+
+  const info = async () => {
+    const nodes = await t.axTree();
+    const byId = new Map(nodes.map((x) => [x.nodeId, x]));
+    const dialog = nodes.find((x) => !x.ignored && x.role && x.role.value === 'dialog');
+    const status = nodes.find((x) => !x.ignored && x.role && x.role.value === 'status' && x.parentId === (dialog && dialog.nodeId));
+    const said = status ? status.childIds.map((id) => byId.get(id)).filter(Boolean).map((x) => x.name && x.name.value).join('') : null;
+    const modal = dialog && (dialog.properties || []).find((p) => p.name === 'modal');
+    return { dialog, name: dialog && dialog.name.value, modal: !!modal && modal.value.value === true, live: status && (status.properties || []).find((p) => p.name === 'live'), said };
+  };
+  let a = await info();
+  t.check('the accessibility tree has the dialog, marked modal', !!a.dialog && a.modal, a.dialog ? 'modal=' + a.modal : 'no dialog node');
+  t.check('its computed name is the first item title', a.name === items[0].title, a.name);
+  t.check('a polite live region sits in the dialog', !!a.live && a.live.value.value === 'polite', JSON.stringify(a.live));
+  t.check('nothing is announced on open', a.said === '', JSON.stringify(a.said));
+
+  await t.press('ArrowRight');
+  t.check('real ArrowRight pages to the second item', await t.waitFor(() => c.title() === items[1].title, 15000), c.title());
+  await t.sleep(300);
+  a = await info();
+  t.check('the dialog name follows to the second title', a.name === items[1].title, a.name);
+  const say = (i) => items[i].title + ', slide ' + String(i + 1).padStart(2, '0') + ' of ' + n;
+  t.check('the live region announces the new slide', a.said === say(1), JSON.stringify(a.said));
+  t.check('focus stays inside the booth', c.booth().contains(c.d.activeElement), c.focusName());
+
+  await t.press('ArrowLeft');
+  t.check('real ArrowLeft pages back', await t.waitFor(() => c.title() === items[0].title, 15000), c.title());
+  await t.sleep(300);
+  a = await info();
+  t.check('the dialog name is the first title again', a.name === items[0].title, a.name);
+  t.check('the live region announces the first slide', a.said === say(0), JSON.stringify(a.said));
+
+  await t.press('Escape');
+  t.check('Escape closes', await t.waitFor(c.isClosed, 15000), '');
+  t.check('the live region is empty again', c.$('#cp-live').textContent === '', c.$('#cp-live').textContent);
+});
+</script>
+</body></html>

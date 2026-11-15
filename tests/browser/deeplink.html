@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>deeplink</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Deep link to an item on page 3 in stress mode: the screen opens on it and the table lands on page 3.
+H.run('deeplink', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const size = site.scene.pageSize;
+  const idx = size * 2 + 2;
+  const item = t.stressItem(col, idx);
+  const c = await t.load('/' + col.id + '/' + item.id + '/?stress=1&still=1');
+  t.check('booth opens on the item', await t.waitFor(() => c.isOpen() && c.title() === item.title, 15000), 'id=' + item.id + ' title=' + c.title() + ' hidden=' + c.booth().hidden);
+  t.check('path is kept', c.path() === '/' + col.id + '/' + item.id + '/', c.path());
+  c.key('Escape');
+  t.check('closes', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+  await t.sleep(300);
+  t.check('table is on page 3', /^25 to 36 of 80$/i.test(c.range()), c.range());
+  t.check('the slide is visible', c.isShown(c.slides()[idx]), 'class=' + c.slides()[idx].className);
+});
+</script>
+</body></html>

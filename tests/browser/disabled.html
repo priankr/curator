@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>disabled</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Disabled controls use aria-disabled, stay focusable and do nothing, by real click and real Enter.
+H.run('disabled', async (t) => {
+  const site = await t.site();
+  const cols = site.collections;
+  const first = cols[0], last = cols[cols.length - 1];
+
+  const arrow = async (col, id, label) => {
+    const c = await t.load('/' + col.id + '/?still=1');
+    const b = c.$('#' + id);
+    t.check(label + ' arrow has aria-disabled true', b.getAttribute('aria-disabled') === 'true', b.getAttribute('aria-disabled'));
+    t.check(label + ' arrow has no disabled property', !b.disabled && !b.hasAttribute('disabled'), '');
+    b.focus();
+    t.check(label + ' arrow can take focus', c.d.activeElement === b, c.focusName());
+    t.check(label + ' arrow is a tab stop', c.tabbable().includes(b), '');
+    const path = c.path();
+    await t.press('Enter');
+    await t.sleep(400);
+    t.check(label + ' arrow does nothing on Enter', c.path() === path && c.$('.table.on').dataset.col === col.id, c.path());
+    await t.press(' ');
+    await t.sleep(400);
+    t.check(label + ' arrow does nothing on Space', c.path() === path && c.$('.table.on').dataset.col === col.id, c.path());
+    b.click();
+    await t.sleep(400);
+    t.check(label + ' arrow does nothing on click', c.path() === path && c.$('.table.on').dataset.col === col.id, c.path());
+    t.check(label + ' arrow keeps focus after activation', c.d.activeElement === b, c.focusName());
+    return c;
+  };
+  const c1 = await arrow(first, 'prev-col', 'first collection previous');
+  t.check('first collection next arrow is enabled', c1.$('#next-col').getAttribute('aria-disabled') === 'false', c1.$('#next-col').getAttribute('aria-disabled'));
+  // The enabled arrow still works by real Enter.
+  c1.$('#next-col').focus();
+  await t.press('Enter');
+  t.check('an enabled arrow still switches collection', await t.waitFor(() => c1.path() === '/' + cols[1].id + '/', 5000), c1.path());
+
+  const c2 = await arrow(last, 'next-col', 'last collection next');
+  t.check('last collection previous arrow is enabled', c2.$('#prev-col').getAttribute('aria-disabled') === 'false', c2.$('#prev-col').getAttribute('aria-disabled'));
+
+  // Table page buttons on the first page.
+  const paged = cols.find((x) => x.items.length > site.scene.pageSize);
+  if (paged) {
+    const c = await t.load('/' + paged.id + '/?still=1');
+    const prev = c.$('.table.on .tb-pg[data-d="-1"]'), range = c.range();
+    t.check('previous page button is aria-disabled on page one', prev.getAttribute('aria-disabled') === 'true', prev.getAttribute('aria-disabled'));
+    prev.focus();
+    await t.press('Enter');
+    await t.sleep(500);
+    t.check('previous page does nothing on Enter', c.range() === range, c.range());
+    prev.click();
+    await t.sleep(500);
+    t.check('previous page does nothing on click', c.range() === range, c.range());
+  }
+
+  // Projector buttons on the first and last slide.
+  const col = cols.find((x) => x.items.length > 2) || cols[0];
+  const c3 = await t.load('/' + col.id + '/' + col.items[0].id + '/?still=1');
+  await t.waitFor(c3.isOpen, 15000);
+  const prev = c3.$('#pj-prev');
+  prev.focus();
+  t.check('disabled projector button takes focus', c3.d.activeElement === prev, c3.focusName());
+  await t.press('Enter');
+  await t.sleep(500);
+  t.check('disabled projector button does nothing on Enter', c3.title() === col.items[0].title && c3.path() === '/' + col.id + '/' + col.items[0].id + '/', c3.title());
+  prev.click();
+  await t.sleep(300);
+  t.check('disabled projector button does nothing on click', c3.title() === col.items[0].title, c3.title());
+  t.check('and does not look pressed by the activation', !prev.classList.contains('on'), prev.className);
+  const lastItem = col.items[col.items.length - 1];
+  const c4 = await t.load('/' + col.id + '/' + lastItem.id + '/?still=1');
+  await t.waitFor(c4.isOpen, 15000);
+  const next = c4.$('#pj-next');
+  next.focus();
+  await t.press('Enter');
+  await t.sleep(500);
+  t.check('last slide: next does nothing on Enter', c4.title() === lastItem.title && next.getAttribute('aria-disabled') === 'true', c4.title());
+});
+</script>
+</body></html>

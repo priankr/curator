@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Curator configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "basic": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Settings most people change",
+      "properties": {
+        "site": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "title",
+            "url"
+          ],
+          "description": "Site identity",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty string",
+              "description": "Wordmark text, page titles and social cards"
+            },
+            "description": {
+              "type": "string",
+              "description": "Meta description and the default social card text",
+              "default": ""
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://[^/?#\\s]+/?$",
+              "message": "must be an http or https address with no path, such as https://links.example.com",
+              "description": "The deployed origin, used for absolute social card URLs and canonical links"
+            },
+            "language": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty language code such as en",
+              "description": "The lang attribute",
+              "default": "en"
+            },
+            "socialImage": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "message": "must be an image path or null",
+              "description": "Default social card image, used for the home page and for items with no preview image. A .png, .jpg, .jpeg, .gif or .webp file inside the repo, relative to the repo root, whose content matches its extension",
+              "default": null
+            }
+          }
+        },
+        "collections": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Collection ordering",
+          "properties": {
+            "order": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$",
+                "message": "must be an id using lowercase letters, numbers and hyphens"
+              },
+              "message": "must be a list of collection ids",
+              "description": "Collection ids in display order. Collections not listed come after, alphabetically",
+              "default": []
+            },
+            "default": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[a-z0-9-]+$",
+              "message": "must be a collection id or null",
+              "description": "The collection shown at the site root. Null means the first collection",
+              "default": null
+            }
+          }
+        },
+        "brand": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Brand colours. Drives poster inks and the default accent roles in the scene",
+          "properties": {
+            "primary": {
+              "type": "array",
+              "description": "Primary brand colours, at least one. Each is an object with a name and a hex value. Poster rules and type dots refer to them by name and position",
+              "minItems": 1,
+              "message": "must have at least one colour",
+              "items": {
+                "type": "object",
+                "description": "One brand colour with a name and a hex value",
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "message": "must be a non-empty colour name",
+                    "description": "Colour name, used by poster rules such as avoidPairs and excludeFromPosters"
+                  },
+                  "value": {
+                    "type": "string",
+                    "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                    "message": "must be a hex colour such as #e4572e",
+                    "description": "Colour as #rgb or #rrggbb"
+                  }
+                }
+              },
+              "default": [
+                {
+                  "name": "Vermilion",
+                  "value": "#e4572e"
+                },
+                {
+                  "name": "Ultramarine",
+                  "value": "#2b4ea2"
+                },
+                {
+                  "name": "Navy",
+                  "value": "#17304f"
+                }
+              ]
+            },
+            "secondary": {
+              "type": "array",
+              "description": "Secondary brand colours, may be empty. Same shape as primary. Used as poster inks and for some type dots",
+              "items": {
+                "type": "object",
+                "description": "One brand colour with a name and a hex value",
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "message": "must be a non-empty colour name",
+                    "description": "Colour name, used by poster rules such as avoidPairs and excludeFromPosters"
+                  },
+                  "value": {
+                    "type": "string",
+                    "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                    "message": "must be a hex colour such as #e4572e",
+                    "description": "Colour as #rgb or #rrggbb"
+                  }
+                }
+              },
+              "default": [
+                {
+                  "name": "Teal",
+                  "value": "#0f6e63"
+                },
+                {
+                  "name": "Plum",
+                  "value": "#5b3a6e"
+                }
+              ]
+            },
+            "accent": {
+              "type": "array",
+              "description": "Accent brand colours, may be empty. Same shape as primary. Used as poster inks, the focus ring and some type dots",
+              "items": {
+                "type": "object",
+                "description": "One brand colour with a name and a hex value",
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "message": "must be a non-empty colour name",
+                    "description": "Colour name, used by poster rules such as avoidPairs and excludeFromPosters"
+                  },
+                  "value": {
+                    "type": "string",
+                    "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                    "message": "must be a hex colour such as #e4572e",
+                    "description": "Colour as #rgb or #rrggbb"
+                  }
+                }
+              },
+              "default": [
+                {
+                  "name": "Marigold",
+                  "value": "#f2b134"
+                },
+                {
+                  "name": "Salmon",
+                  "value": "#f08a7b"
+                }
+              ]
+            },
+            "neutral": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Neutral colours",
+              "properties": {
+                "light": {
+                  "type": "string",
+                  "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                  "message": "must be a hex colour such as #e4572e",
+                  "description": "Light neutral. Poster paper, and the light text colour on dark fills",
+                  "default": "#efe7d3"
+                },
+                "dark": {
+                  "type": "string",
+                  "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                  "message": "must be a hex colour such as #e4572e",
+                  "description": "Dark neutral. The dark text colour on light fills, and poster paper on the inverse set",
+                  "default": "#1d1b18"
+                },
+                "surface": {
+                  "type": "string",
+                  "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                  "message": "must be a hex colour such as #e4572e",
+                  "description": "Surface neutral, a second paper tone for posters. Derived from the light and dark neutrals when omitted"
+                },
+                "muted": {
+                  "type": "string",
+                  "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+                  "message": "must be a hex colour such as #e4572e",
+                  "description": "Muted neutral, a quiet mid tone. Derived from the light and dark neutrals when omitted"
+                }
+              }
+            }
+          }
+        },
+        "fonts": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The four main font roles, as Google Fonts family names. Self hosting serves the same families from your own site",
+          "properties": {
+            "display": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty font family name",
+              "description": "Titles and wordmark",
+              "default": "Fraunces"
+            },
+            "body": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty font family name",
+              "description": "UI text",
+              "default": "Archivo"
+            },
+            "mono": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty font family name",
+              "description": "Labels and counters",
+              "default": "IBM Plex Mono"
+            },
+            "poster": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty font family name",
+              "description": "Poster title band and poster type",
+              "default": "Archivo"
+            }
+          }
+        }
+      }
+    },
+    "advanced": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Everything else, defaulting to the Curator design",
+      "properties": {
+        "fonts": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Extra font roles and font loading",
+          "properties": {
+            "typewriter": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty font family name",
+              "description": "Slide label font for typed labels",
+              "default": "Special Elite"
+            },
+            "handwriting": {
+              "type": "string",
+              "minLength": 1,
+              "message": "must be a non-empty font family name",
+              "description": "Slide label font for handwritten labels",
+              "default": "Caveat"
+            },
+            "source": {
+              "type": "string",
+              "enum": [
+                "google",
+                "self"
+              ],
+              "description": "google loads from Google Fonts. self downloads the font files at build time and serves them from the output folder",
+              "default": "google"
+            },
+            "googleFontsUrl": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^https://\\S+$",
+              "message": "must be an https address or null",
+              "description": "Overrides the Google Fonts URL the build generates, for custom weights or axes. When set, the family check against Google Fonts is skipped",
+              "default": null
+            }
+          }
+        },
+        "posters": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Poster generation for items without an image",
+          "properties": {
+            "avoidPairs": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "message": "must be a pair of colour names"
+              },
+              "message": "must be a list of colour name pairs",
+              "description": "Pairs of colour names that never appear together in a poster, for example [[\"Lime\", \"Orange\"]]",
+              "default": []
+            },
+            "excludeFromPosters": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": "must be a list of colour names",
+              "description": "Brand colours never used as poster ink or paper",
+              "default": []
+            },
+            "inverseShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "message": "must be a number from 0 to 1",
+              "description": "Share of posters printed on dark paper, a primary colour or the dark neutral",
+              "default": 0.25
+            },
+            "primaryShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "message": "must be a number from 0 to 1",
+              "description": "Target share of primary colours across a collection's posters",
+              "default": 0.75
+            },
+            "minContrast": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21,
+              "message": "must be a number from 1 to 21",
+              "description": "Minimum ink to paper contrast ratio",
+              "default": 1.6
+            },
+            "compositions": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "all"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 16
+                  }
+                }
+              ],
+              "message": "must be \"all\" or a list of composition numbers from 1 to 16",
+              "description": "all, or a list of composition numbers 1 to 16 to allow",
+              "default": "all"
+            }
+          }
+        },
+        "scene": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Scene selection and behaviour",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]+$",
+              "message": "must be an id using lowercase letters, numbers and hyphens",
+              "description": "Which scene folder in src/scenes to mount. Only lighttable ships",
+              "default": "lighttable"
+            },
+            "pageSize": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "message": "must be a whole number from 1 to 100",
+              "description": "Slides per table page",
+              "default": 12
+            },
+            "motion": {
+              "type": "string",
+              "enum": [
+                "normal",
+                "fast",
+                "off"
+              ],
+              "description": "Motion level. normal is the full design, fast shortens animations, off removes them",
+              "default": "normal"
+            },
+            "colors": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "message": "must be a colour string"
+              },
+              "message": "must be an object of colour overrides",
+              "description": "Overrides for any scene colour token, keyed by token name without the leading dashes, for example table-frame-top. Brand-driven role tokens cannot be overridden",
+              "default": {}
+            }
+          }
+        },
+        "images": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Image fetching behaviour. Links to local or private network addresses are never fetched and get a poster",
+          "properties": {
+            "fetch": {
+              "type": "boolean",
+              "description": "Fetch preview images at build time",
+              "default": true
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000,
+              "message": "must be a whole number of milliseconds from 1000 to 120000",
+              "description": "Timeout for each image request in milliseconds",
+              "default": 15000
+            },
+            "maxBytes": {
+              "type": "integer",
+              "minimum": 10000,
+              "maximum": 50000000,
+              "message": "must be a whole number of bytes from 10000 to 50000000",
+              "description": "Largest image accepted in bytes",
+              "default": 3000000
+            },
+            "fitDomains": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": "must be a list of hostnames",
+              "description": "Hostnames whose images are shown fitted rather than cropped",
+              "default": [
+                "github.com"
+              ]
+            }
+          }
+        },
+        "types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "message": "must be an object with optional label and dot",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "message": "must be a non-empty string",
+                "description": "Display label for the type, used on the slide and the open screen"
+              },
+              "dot": {
+                "type": "string",
+                "pattern": "^(primary|secondary|accent)[.][0-9]+$",
+                "message": "must be a colour role such as primary.0, secondary.0 or accent.0",
+                "description": "Dot colour role for the type, a tier and a zero based index. primary.0 is primary 1 and accent.1 is accent 2"
+              }
+            }
+          },
+          "message": "must be an object keyed by type name",
+          "description": "Per-type overrides keyed by type name, each with an optional label and dot. The dot is a colour role such as accent.1",
+          "default": {}
+        },
+        "build": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Build output",
+          "properties": {
+            "outDir": {
+              "type": "string",
+              "pattern": "^(?![/\\\\]|[A-Za-z]:).+$",
+              "message": "must be a relative folder path such as dist",
+              "description": "Output folder, relative to the repo root",
+              "default": "dist"
+            },
+            "itemPages": {
+              "type": "boolean",
+              "description": "Write a page for each item. Turn off only for very large sites: item links then load through 404.html, with a not found status and no item preview card",
+              "default": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

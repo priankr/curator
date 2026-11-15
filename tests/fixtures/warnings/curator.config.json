@@ -1,0 +1,15 @@
+{
+  "basic": {
+    "site": {
+      "title": "Sample site",
+      "url": "https://links.example.com"
+    },
+    "collections": {
+      "order": [
+        "empty",
+        "warn",
+        "empty"
+      ]
+    }
+  }
+}

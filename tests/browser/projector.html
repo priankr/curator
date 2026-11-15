@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>projector</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Open by click, page with the button and the arrow key, close, then check the table and the first slide edge.
+H.run('projector', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const items = col.items;
+  const c = await t.load('/');
+  const slide = c.slides()[6];
+  const state = () => 'title=' + c.title() + ' prevDis=' + c.$('#pj-prev').getAttribute('aria-disabled') + ' nextDis=' + c.$('#pj-next').getAttribute('aria-disabled') + ' gone=' + c.$$('.slide.gone').length;
+  const buttons = (prev, next) => c.$('#pj-prev').getAttribute('aria-disabled') === prev && c.$('#pj-next').getAttribute('aria-disabled') === next;
+  slide.click();
+  t.check('opens on the seventh item', await t.waitFor(() => c.isOpen() && c.title() === items[6].title, 15000), state());
+  t.check('buttons enabled on a middle slide', buttons('false', 'false'), state());
+
+  c.$('#pj-next').click();
+  t.check('next button shows the eighth item', await t.waitFor(() => c.title() === items[7].title, 15000), state());
+  t.check('path follows the next button', c.path() === '/' + col.id + '/' + items[7].id + '/', c.path());
+  t.check('buttons still enabled', buttons('false', 'false'), state());
+
+  await t.sleep(600);
+  c.key('ArrowRight');
+  t.check('ArrowRight shows the ninth item', await t.waitFor(() => c.title() === items[8].title, 15000), state());
+  t.check('exactly one slide is out of the table while open', await t.waitFor(() => c.$$('.slide.gone').length === 1, 5000), state());
+
+  await t.sleep(600);
+  c.key('Escape');
+  t.check('closes', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+  await t.sleep(200);
+  const current = c.slides()[8];
+  t.check('no slide is left hidden', c.$$('.slide.gone').length === 0, 'gone=' + c.$$('.slide.gone').length);
+  t.check('the current item slide is visible', c.isShown(current), 'class=' + current.className);
+  t.check('focus is on the current item slide', c.d.activeElement === current, c.focusName());
+
+  // First slide: previous is disabled and clicking it does nothing.
+  const c2 = await t.load('/');
+  c2.slides()[0].click();
+  t.check('first slide opens', await t.waitFor(() => c2.isOpen() && c2.title() === items[0].title, 15000), 'title=' + c2.title());
+  t.check('previous is aria-disabled on the first slide', c2.$('#pj-prev').getAttribute('aria-disabled') === 'true', c2.$('#pj-prev').getAttribute('aria-disabled'));
+  t.check('next is enabled on the first slide', c2.$('#pj-next').getAttribute('aria-disabled') === 'false', c2.$('#pj-next').getAttribute('aria-disabled'));
+  const before = c2.path();
+  c2.$('#pj-prev').click();
+  await t.sleep(1200);
+  t.check('clicking previous changes nothing', c2.title() === items[0].title && c2.path() === before, 'title=' + c2.title() + ' path=' + c2.path());
+});
+</script>
+</body></html>

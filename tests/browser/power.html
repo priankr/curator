@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>power</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// The round knob on the projector is a power button that closes the screen like Back to the table.
+H.run('power', async (t) => {
+  const c = await t.load('/?still=1');
+  const start = c.path();
+  const slide = c.slides()[3];
+  const open = async (label) => {
+    slide.click();
+    t.check(label + ': the slide opens', await t.waitFor(c.isOpen, 15000), 'hidden=' + c.booth().hidden);
+    await t.sleep(300);
+  };
+  const closed = async (label) => {
+    t.check(label + ': the booth closes', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+    await t.sleep(300);
+    t.check(label + ': the URL returns to the table', c.path() === start, c.path());
+    t.check(label + ': focus is on the slide', c.d.activeElement === slide, c.focusName());
+  };
+  const power = () => c.$('#pj-power');
+
+  t.check('the power button is a button', power() && power().tagName === 'BUTTON' && power().type === 'button', power() && power().tagName);
+  await open('click');
+  power().click();
+  await closed('click');
+
+  // Walk to the button with real Tab presses, from the screen body.
+  for (const key of ['Enter', ' ']) {
+    const label = key === 'Enter' ? 'Enter' : 'Space';
+    await open(label);
+    c.$('#scr-body').focus();
+    let n = 0;
+    while (c.d.activeElement !== power() && n++ < 8) await t.press('Tab');
+    t.check(label + ': Tab reaches the power button', c.d.activeElement === power(), c.focusName());
+    await t.press(key);
+    await closed(label);
+  }
+
+  await open('name');
+  const nodes = await t.axTree();
+  const node = nodes.find((x) => !x.ignored && x.role && x.role.value === 'button' && x.name && x.name.value === 'Turn off the projector');
+  t.check('the accessibility tree names it Turn off the projector', !!node, nodes.filter((x) => !x.ignored && x.role && x.role.value === 'button').map((x) => x.name && x.name.value).join(' | '));
+  t.check('the symbol is hidden from the accessibility tree', power().querySelector('svg').getAttribute('aria-hidden') === 'true', '');
+  power().click();
+  await closed('name');
+});
+</script>
+</body></html>

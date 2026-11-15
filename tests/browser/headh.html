@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>headh</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// --headH must be the same on every load and must follow the head when the collection or the width changes it.
+const read = (c) => parseFloat(c.w.document.documentElement.style.getPropertyValue('--headH'));
+const bottom = (c) => c.$('#head').getBoundingClientRect().bottom;
+
+// fonts.ready can resolve before a web font is requested, so wait until none is still loading.
+const settle = async (c) => { await c.d.fonts.ready; await H.waitFor(() => ![...c.d.fonts].some((f) => f.status === 'loading'), 5000); await H.sleep(300); };
+
+H.run('headh', async (t) => {
+  const a = await t.load('/?still=1');
+  await settle(a);
+  const first = read(a);
+  const b = await t.load('/?still=1');
+  await settle(b);
+  t.check('--headH is the same on two loads', first > 0 && first === read(b), first + ' then ' + read(b));
+  t.check('--headH matches the head bottom', Math.abs(read(b) - bottom(b)) < 0.5, read(b) + ' vs ' + bottom(b));
+
+  for (const width of [1440, 700]) {
+    const c = await t.load('/?still=1', width, 900);
+    await settle(c);
+    const seen = new Set([read(c)]);
+    let ok = Math.abs(read(c) - bottom(c)) < 0.5, detail = '';
+    for (let i = 1; i < 6 && c.$('#next-col').getAttribute('aria-disabled') !== 'true'; i++) {
+      const before = c.$('#h-title').textContent;
+      c.$('#next-col').click();
+      await t.waitFor(() => c.$('#h-title').textContent !== before, 3000);
+      await t.sleep(250);
+      seen.add(read(c));
+      if (Math.abs(read(c) - bottom(c)) >= 0.5) { ok = false; detail += c.$('#h-title').textContent + ': ' + read(c) + ' vs ' + bottom(c) + ' '; }
+    }
+    t.check(width + 'px: --headH follows the head bottom on every collection', ok, detail + 'values ' + [...seen].join(', '));
+  }
+});
+</script>
+</body></html>

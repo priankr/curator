@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>click</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Click the seventh slide, check the open screen and focus, then Escape and check focus returns.
+H.run('click', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const item = col.items[6];
+  const c = await t.load('/');
+  const slide = c.slides()[6];
+  slide.click();
+  const opened = await t.waitFor(c.isOpen, 15000);
+  t.check('booth is open', opened, 'hidden=' + c.booth().hidden + ' class=' + c.booth().className);
+  t.check('path is the item path', c.path() === '/' + col.id + '/' + item.id + '/', c.path());
+  t.check('focus is on the screen body', c.d.activeElement && c.d.activeElement.id === 'scr-body', c.focusName());
+  c.key('Escape');
+  const closed = await t.waitFor(c.isClosed, 15000);
+  await t.sleep(200);
+  t.check('booth is hidden after Escape', closed, 'hidden=' + c.booth().hidden);
+  t.check('path is the table path', c.path() === '/' || c.path() === '/' + col.id + '/', c.path());
+  t.check('focus is back on the same slide', c.d.activeElement === slide, c.focusName());
+});
+</script>
+</body></html>

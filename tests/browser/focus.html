@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>focus</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Real Tab presses: every table control shows a focus ring, the open screen traps focus, and the outside returns after close.
+H.run('focus', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const c = await t.load('/?still=1');
+  const name = c.name;
+  const shadows = new Map(c.tabbable().map((e) => [e, c.w.getComputedStyle(e).boxShadow]));
+
+  // Table view: walk every stop with real Tab presses.
+  const stops = c.tabbable();
+  t.check('the table has tab stops', stops.length > 20, stops.length);
+  t.check('the screen reader list links are not tab stops', !stops.some((e) => e.closest('nav.sr-only')), stops.filter((e) => e.closest('nav.sr-only')).length + ' of them');
+  const seen = [], bare = [];
+  for (let i = 0; i < stops.length; i++) {
+    await t.press('Tab');
+    const a = c.d.activeElement;
+    seen.push(a);
+    if (!c.ringed(a, shadows.get(a) || '')) bare.push(name(a));
+  }
+  t.check('Tab visits every table control once, in order', seen.every((a, i) => a === stops[i]), seen.map(name).join(' > ').slice(0, 300));
+  t.check('every table control shows a focus ring', bare.length === 0, bare.join(', '));
+  t.check('the side arrows and page buttons are among the stops', ['prev-col', 'next-col'].every((id) => seen.some((a) => a.id === id)) && seen.filter((a) => a.classList.contains('tb-pg')).length === 2, '');
+
+  // Open a slide with the keyboard, then check the trap.
+  const slide = c.slides()[2];
+  slide.focus();
+  await t.press('Enter');
+  t.check('Enter opens the slide', await t.waitFor(c.isOpen, 15000), 'hidden=' + c.booth().hidden);
+  t.check('focus is on the screen body', c.d.activeElement.id === 'scr-body', name(c.d.activeElement));
+  const outside = [...c.$('#app').children].filter((e) => e !== c.booth());
+  t.check('everything outside the booth is inert', outside.length >= 5 && outside.every((e) => e.inert), outside.filter((e) => !e.inert).map(name).join(', '));
+  const inside = c.tabbable();
+  t.check('the booth holds the visit link, two projector buttons, the power button and the close button in that order', inside.length === 5 && inside.every((e) => c.booth().contains(e)) && inside.map((e) => e.id).join() === [inside[0].id, 'pj-prev', 'pj-next', 'pj-power', 'bt-close'].join(), inside.map(name).join(', '));
+  t.check('no tab stop is outside the booth', c.tabbable().every((e) => c.booth().contains(e)), '');
+  const bshadow = new Map(inside.map((e) => [e, c.w.getComputedStyle(e).boxShadow]));
+  const order = [];
+  const strays = [];
+  const unringed = [];
+  for (let i = 0; i < 11; i++) {
+    await t.press('Tab');
+    const a = c.d.activeElement;
+    order.push(name(a));
+    if (!c.booth().contains(a)) strays.push(name(a));
+    else if (!c.ringed(a, bshadow.get(a))) unringed.push(name(a));
+  }
+  const cycle = inside.map(name);
+  t.check('Tab cycles through the booth controls and wraps', JSON.stringify(order) === JSON.stringify([...cycle, ...cycle, cycle[0]]), order.join(' > '));
+  t.check('focus is never outside the booth', strays.length === 0, strays.join(', '));
+  t.check('every booth control shows a focus ring', unringed.length === 0, unringed.join(', '));
+  const back = [];
+  for (let i = 0; i < 6; i++) { await t.press('Tab', { shift: true }); back.push(name(c.d.activeElement)); }
+  t.check('Shift+Tab goes backwards and wraps', JSON.stringify(back) === JSON.stringify([cycle[4], cycle[3], cycle[2], cycle[1], cycle[0], cycle[4]]), back.join(' > '));
+  // From the screen body (focused programmatically, not a tab stop) both directions enter the cycle.
+  c.$('#scr-body').focus();
+  await t.press('Tab', { shift: true });
+  t.check('Shift+Tab from the screen body goes to the last control', c.d.activeElement === inside[4], name(c.d.activeElement));
+  c.$('#scr-body').focus();
+  await t.press('Tab');
+  t.check('Tab from the screen body goes to the first control', c.d.activeElement === inside[0], name(c.d.activeElement));
+
+  // Close, then the outside is reachable again.
+  await t.press('Escape');
+  t.check('Escape closes the screen', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+  await t.sleep(300);
+  t.check('nothing is inert after close', [...c.$('#app').children].every((e) => !e.inert), [...c.$('#app').children].filter((e) => e.inert).map(name).join(', '));
+  t.check('focus is back on the slide', c.d.activeElement === slide, name(c.d.activeElement));
+  await t.press('Tab');
+  t.check('Tab moves on to the next control outside the booth', c.d.activeElement !== slide && !c.booth().contains(c.d.activeElement) && c.d.activeElement !== c.d.body, name(c.d.activeElement));
+  c.$('.cu-brand').focus();
+  await t.press('Tab');
+  t.check('the collections menu button is reachable again', c.d.activeElement.classList.contains('cu-menu-btn'), name(c.d.activeElement));
+});
+</script>
+</body></html>

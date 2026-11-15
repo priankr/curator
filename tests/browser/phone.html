@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>phone</title></head>
+<body style="margin:0;background:#333;display:flex;gap:10px">
+<script>
+// Four 390x844 iframes for screenshots only: an image item, a poster item, the table and not found.
+(async () => {
+  const site = await (await fetch('/data/site.json')).json();
+  // Any collection will do, and one kind stands in for the other when the content has none of it, so there are always four frames.
+  const first = (want) => { for (const col of site.collections) { const it = col.items.find(want); if (it) return '/' + col.id + '/' + it.id + '/?still=1'; } return null; };
+  const img = first((i) => i.image), poster = first((i) => i.poster);
+  const srcs = [img || poster, poster || img, '/?still=1', '/nope/?still=1'];
+  srcs.forEach((s) => {
+    const f = document.createElement('iframe');
+    f.style.cssText = 'width:390px;height:844px;border:0';
+    f.src = s;
+    document.body.appendChild(f);
+  });
+})();
+</script>
+</body></html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>filter</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// The all chip leads and is pressed with no filter. A tag chip dims the slides without that tag, and all or a second click clears it.
+H.run('filter', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const c = await t.load('/');
+  const chips = c.$$('.cu-chip');
+  const all = chips[0];
+  const pressed = (b) => b && b.getAttribute('aria-pressed');
+  const dimmed = () => c.$$('.slide.dim').length;
+  t.check('all is the first chip', !!all && all.textContent === 'all' && all.dataset.tag === '', all && all.textContent);
+  t.check('there is no Filter label', !c.$('.cu-chips-label'));
+  t.check('all is pressed on load', pressed(all) === 'true', pressed(all));
+  const chip = chips.find((b) => { const n = col.items.filter((i) => i.tags.includes(b.dataset.tag)).length; return b.dataset.tag && n > 0 && n < col.items.length; });
+  t.check('a partial tag chip exists', !!chip, chips.length + ' chips');
+  if (!chip || !all) return;
+  const tag = chip.dataset.tag;
+  chip.click();
+  await t.sleep(200);
+  const want = col.items.map((i, n) => (i.tags.includes(tag) ? -1 : n)).filter((n) => n >= 0);
+  const got = c.slides().map((s, n) => (s.classList.contains('dim') ? n : -1)).filter((n) => n >= 0);
+  t.check('exactly the non-matching slides are dimmed', JSON.stringify(want) === JSON.stringify(got), 'tag=' + tag + ' want=' + want.length + ' got=' + got.length);
+  t.check('chip is pressed', pressed(chip) === 'true', pressed(chip));
+  t.check('all is not pressed', pressed(all) === 'false', pressed(all));
+  all.click();
+  await t.sleep(200);
+  t.check('nothing is dimmed after all is clicked', dimmed() === 0, dimmed());
+  t.check('all is pressed again', pressed(all) === 'true', pressed(all));
+  t.check('the tag chip is not pressed', pressed(chip) === 'false', pressed(chip));
+  all.click();
+  await t.sleep(100);
+  t.check('clicking all again keeps it pressed and nothing dimmed', pressed(all) === 'true' && dimmed() === 0, pressed(all) + ' ' + dimmed());
+  chip.click();
+  await t.sleep(200);
+  chip.click();
+  await t.sleep(200);
+  t.check('nothing is dimmed after the active tag is clicked again', dimmed() === 0, dimmed());
+  t.check('the tag chip is not pressed after the second click', pressed(chip) === 'false', pressed(chip));
+  t.check('all is pressed after the second click', pressed(all) === 'true', pressed(all));
+});
+</script>
+</body></html>

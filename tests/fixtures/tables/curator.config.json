@@ -1,0 +1,16 @@
+{
+  "basic": {
+    "site": {
+      "title": "Sample site",
+      "url": "https://links.example.com"
+    },
+    "collections": {
+      "order": [
+        "long",
+        "middle",
+        "short"
+      ],
+      "default": "long"
+    }
+  }
+}

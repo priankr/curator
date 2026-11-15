@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>tablepage</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Stress mode: page the table, open a slide, page the projector across a page boundary, close, check the table page.
+H.run('tablepage', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const size = site.scene.pageSize;
+  const c = await t.load('/?stress=1&still=1');
+  t.check('visible slide count is one page', c.visibleSlides().length === size, c.visibleSlides().length);
+  t.check('range text is 1 TO 12 OF 80', /^1 to 12 of 80$/i.test(c.range()), c.range());
+  t.check('previous page is disabled and next is enabled', c.pageDisabled() === 'true,false', c.pageDisabled());
+
+  c.$('.table.on .tb-pg[data-d="1"]').click();
+  t.check('next page shows 13 TO 24 OF 80', await t.waitFor(() => /^13 to 24 of 80$/i.test(c.range()), 5000), c.range());
+  t.check('second page shows a full page of slides', c.visibleSlides().length === size, c.visibleSlides().length);
+  t.check('both page buttons are enabled', c.pageDisabled() === 'false,false', c.pageDisabled());
+
+  const start = size + 10;
+  const slide = c.visibleSlides()[10];
+  const first = t.stressItem(col, start);
+  slide.click();
+  t.check('opens the eleventh visible slide', await t.waitFor(() => c.isOpen() && c.title() === first.title, 15000), 'title=' + c.title() + ' path=' + c.path());
+  for (let i = 0; i < 4; i++) c.key('ArrowRight');
+  const last = t.stressItem(col, start + 4);
+  t.check('four ArrowRight presses cross the page boundary', await t.waitFor(() => c.path() === '/' + col.id + '/' + last.id + '/' && c.title() === last.title, 15000), 'title=' + c.title() + ' path=' + c.path());
+
+  c.key('Escape');
+  t.check('closes', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+  await t.sleep(300);
+  const now = c.slides()[start + 4];
+  t.check('table shows the page of the current slide', /^25 to 36 of 80$/i.test(c.range()), c.range());
+  t.check('the current slide has focus', c.d.activeElement === now, c.focusName());
+  t.check('the current slide is visible', c.isShown(now), 'class=' + now.className);
+  t.check('no slide is hidden by the projector', c.$$('.slide.gone').length === 0, 'gone=' + c.$$('.slide.gone').length);
+  t.check('a full page of slides is visible', c.visibleSlides().length === size, c.visibleSlides().length);
+});
+</script>
+</body></html>

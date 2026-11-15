@@ -1,0 +1,20 @@
+{
+  "name": "curator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "test:browser": "node scripts/browser.mjs",
+    "shots": "node scripts/shots.mjs",
+    "perf": "node scripts/perf.mjs",
+    "docs": "node scripts/docs-config.mjs"
+  }
+}

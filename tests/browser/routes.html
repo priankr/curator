@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>routes</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Old hash links, unknown paths and the screen reader list.
+H.run('routes', async (t) => {
+  const site = await t.site();
+  const def = site.collections.find((c) => c.id === site.defaultCollection);
+  const tools = site.collections.find((c) => c.id === 'tools') || def;
+  const item = tools.items.find((i) => i.id === 'uv') || tools.items[0];
+
+  const a = await t.load('/#/' + tools.id + '/' + item.id);
+  t.check('hash link opens the booth', await t.waitFor(a.isOpen, 15000), 'hidden=' + a.booth().hidden);
+  t.check('hash link becomes a real path', a.path() === '/' + tools.id + '/' + item.id + '/' && a.w.location.hash === '', a.path() + ' hash=' + a.w.location.hash);
+
+  // The Visit button and the active menu row take their fill from accent 1, else primary 1.
+  const rgbOf = (h) => 'rgb(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(', ') + ')';
+  const accent = rgbOf((site.brand.accent[0] || site.brand.primary[0]).value);
+  const visit = a.$('.cu-visit');
+  t.check('Visit button fill is accent 1', !!visit && a.w.getComputedStyle(visit).backgroundColor === accent, visit && a.w.getComputedStyle(visit).backgroundColor + ' vs ' + accent);
+
+  const b = await t.load('/nope/?still=1');
+  const note = b.$('.cu-note[role="status"]');
+  t.check('not found note is exact and a status', !!note && note.querySelector('span').textContent === 'Page not found.', note && note.textContent);
+  t.check('not found replaces the URL with home and keeps the query', b.path() === '/' && b.w.location.search === '?still=1', b.path() + b.w.location.search);
+  const n2 = await t.load('/' + tools.id + '/nope/?still=1');
+  const note2 = n2.$('.cu-note[role="status"]');
+  t.check('an unknown item is not found too', !!note2 && note2.querySelector('span').textContent === 'Page not found.' && n2.path() === '/' && !!n2.$('.table.on') && n2.$('.table.on').dataset.col === def.id, n2.path());
+  const n3 = await t.load('/#/nope');
+  t.check('a dead hash link is not found too', !!n3.$('.cu-note[role="status"]') && n3.path() === '/' && n3.w.location.hash === '', n3.path() + n3.w.location.hash);
+  t.check('the default table is shown', !!b.$('.table.on') && b.$('.table.on').dataset.col === def.id, b.$('.table.on') && b.$('.table.on').dataset.col);
+  t.check('booth stays closed', b.isClosed(), 'hidden=' + b.booth().hidden);
+  // The row fades in with a transition, so read it with motion off. The panel is hidden until opened.
+  const c = await t.load('/?still=1');
+  c.$('.cu-menu-btn').click();
+  const pill = c.$('.cu-col.on');
+  t.check('active menu row fill is accent 1', !!pill && c.w.getComputedStyle(pill).backgroundColor === accent, pill && c.w.getComputedStyle(pill).backgroundColor + ' vs ' + accent);
+
+  const nav = b.$('nav.sr-only');
+  t.check('screen reader list exists', !!nav, '');
+  if (!nav) return;
+  const links = [...nav.querySelectorAll('h3 a')].map((x) => x.getAttribute('href'));
+  const want = [];
+  site.collections.forEach((col) => col.items.forEach((it) => want.push('/' + encodeURIComponent(col.id) + '/' + encodeURIComponent(it.id) + '/')));
+  t.check('list holds every item of every collection', JSON.stringify(links) === JSON.stringify(want), links.length + ' links, ' + want.length + ' items');
+  const codes = await Promise.all(links.map((h) => fetch(h).then((r) => r.status, () => 0)));
+  const bad = links.filter((h, i) => codes[i] !== 200);
+  t.check('every link points to a real item page', bad.length === 0, bad.slice(0, 5).join(', '));
+});
+</script>
+</body></html>

@@ -1,0 +1,27 @@
+{
+  "basic": {
+    "brand": {
+      "primary": [
+        { "name": "Orange", "value": "#FF6A13" },
+        { "name": "Action orange", "value": "#E8590C" }
+      ],
+      "secondary": [
+        { "name": "Forest", "value": "#175A37" }
+      ],
+      "accent": [
+        { "name": "Lime", "value": "#CCF53A" }
+      ],
+      "neutral": {
+        "light": "#FFFEFA",
+        "dark": "#2B1D16",
+        "surface": "#EFE8DC",
+        "muted": "#6F6358"
+      }
+    }
+  },
+  "advanced": {
+    "posters": {
+      "avoidPairs": [["Lime", "Orange"], ["Lime", "Action orange"]]
+    }
+  }
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme</title>
+<link rel="stylesheet" href="theme-page.css" id="tp-css">
+<script type="module" src="theme-page.js"></script>
+</head>
+<body class="tp">
+<header class="cu-top"><a class="cu-brand" href="/"><b id="tp-title">Curator</b><span>Theme</span></a><a class="tp-back" href="/">Light table</a></header>
+<main>
+  <section class="hero">
+    <h1>Theme <em>check</em></h1>
+    <div>
+      <p>A dev only reference for checking your brand before you publish. Everything here is drawn live from your config, your content and the same modules the site uses.</p>
+      <small>This page is served by npm run dev and is never part of the production build.</small>
+    </div>
+  </section>
+
+  <section class="sec" id="sec-switch">
+    <h2>Brand switch</h2>
+    <p>Pick a brand. Everything on this page that is drawn from the brand follows. Fonts and scene colours belong to the site, so they stay the same.</p>
+    <nav class="switch" id="switch" aria-label="Brand"></nav>
+    <p class="note" id="active"></p>
+  </section>
+
+  <section class="sec" id="sec-brand">
+    <h2>Brand tokens</h2>
+    <p id="brandnote"></p>
+    <div class="sw-grid" id="brand"></div>
+    <p class="note" id="rules"></p>
+    <h3 class="sub">Scene roles</h3>
+    <p class="note">The scene colours the build computes from this brand. Text is the neutral that reads best on its fill.</p>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <section class="sec" id="sec-sets">
+    <h2>Poster ink sets</h2>
+    <p>Each poster takes a paper and three inks. The light set uses the light or surface neutral as paper. The inverse set uses the dark neutral or a primary. Inks must reach the minimum contrast against the paper, can never be an avoided pair, and every poster holds at least one primary colour.</p>
+    <div id="sets"></div>
+    <h3 class="sub">Measured against the targets</h3>
+    <div id="stats"></div>
+  </section>
+
+  <section class="sec" id="sec-fonts">
+    <h2>Fonts</h2>
+    <p>The six font roles, set through the same font variables the site uses.</p>
+    <div class="fonts" id="fonts"></div>
+  </section>
+
+  <section class="sec" id="sec-scene">
+    <h2>Scene colours</h2>
+    <p>Every colour token of the light table, grouped by object. Role tokens follow the brand. Tokens set in advanced.scene.colors are marked as overridden.</p>
+    <div class="scene" id="scene"></div>
+  </section>
+
+  <section class="sec" id="sec-sixteen">
+    <h2>The sixteen</h2>
+    <p>One composition each, shown at slide ratio, 3:2.</p>
+    <div class="grid4" id="all"></div>
+  </section>
+
+  <section class="sec" id="sec-one">
+    <h2>One item, sixteen ways</h2>
+    <p id="mixnote"></p>
+    <h3 class="sub">Slide window, 300 by 200</h3>
+    <div class="grid-slide" id="mix-slide"></div>
+  </section>
+</main>
+</body>
+</html>

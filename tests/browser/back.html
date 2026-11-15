@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>back</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// The back button closes the screen and returns focus to the slide.
+H.run('back', async (t) => {
+  const c = await t.load('/');
+  const start = c.path();
+  const slide = c.slides()[3];
+  slide.click();
+  t.check('opens', await t.waitFor(c.isOpen, 15000), 'hidden=' + c.booth().hidden);
+  t.check('path is the item path', c.path() !== start, c.path());
+  c.w.history.back();
+  t.check('booth closes on back', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+  await t.sleep(300);
+  t.check('path returns to the table', c.path() === start, c.path());
+  t.check('focus returns to the slide', c.d.activeElement === slide, c.focusName());
+  t.check('no slide is left hidden', c.$$('.slide.gone').length === 0, c.$$('.slide.gone').length);
+});
+</script>
+</body></html>

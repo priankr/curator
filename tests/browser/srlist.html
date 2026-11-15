@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>srlist</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// The accessibility tree exposes every item of every collection, including items far down the list, and at stress size. content-visibility: auto on the list hid them from it.
+H.run('srlist', async (t) => {
+  const site = await t.site();
+  const check = async (label, query, perCollection) => {
+    const c = await t.load('/' + query);
+    const nodes = await t.axTree();
+    const links = nodes.filter((x) => !x.ignored && x.role && x.role.value === 'link').map((x) => ({ name: x.name.value, url: ((x.properties || []).find((p) => p.name === 'url') || { value: {} }).value.value || '' }));
+    const headings = nodes.filter((x) => !x.ignored && x.role && x.role.value === 'heading' && x.properties.some((p) => p.name === 'level' && p.value.value === 3)).map((x) => x.name.value);
+    const want = [];
+    site.collections.forEach((col) => { for (let i = 0; i < (perCollection || col.items.length); i++) want.push({ col, item: t.stressItem(col, i), i }); });
+    const missing = [];
+    const visits = links.filter((l) => /^Visit link: /.test(l.name));
+    want.forEach(({ col, item, i }) => {
+      const page = '/' + encodeURIComponent(col.id) + '/' + encodeURIComponent(item.id) + '/';
+      if (!links.some((l) => l.name === item.title && l.url === c.w.location.origin + page)) missing.push(col.id + '#' + i + ' link ' + item.title);
+    });
+    t.check(label + ': every item has a named link to its page', missing.length === 0, missing.length + ' missing, first ' + missing.slice(0, 3).join(' | '));
+    t.check(label + ': every item has a heading', headings.length >= want.length, headings.length + ' headings for ' + want.length + ' items');
+    t.check(label + ': every item has a Visit link', visits.length === want.length, visits.length + ' visit links for ' + want.length + ' items');
+    const last = want[want.length - 1];
+    t.check(label + ': the very last item is exposed', links.some((l) => l.name === last.item.title), last.item.title);
+    const urls = site.collections.map((col) => col.items.length);
+    t.check(label + ': the list is a named navigation', nodes.some((x) => !x.ignored && x.role && x.role.value === 'navigation' && x.name.value === 'All items'), '');
+    return urls;
+  };
+  await check('normal', '?still=1');
+  await check('stress', '?still=1&stress=1', 80);
+});
+</script>
+</body></html>

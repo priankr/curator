@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>theme</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// The dev only theme page: sections, sixteen posters, tokens, and the brand switch.
+H.run('theme', async (t) => {
+  const headings = ['Brand switch', 'Brand tokens', 'Poster ink sets', 'Fonts', 'Scene colours', 'The sixteen', 'One item, sixteen ways'];
+  const c = await t.load('/__theme/?still=1');
+  const h2 = c.$$('h2').map((e) => e.textContent.trim());
+  headings.forEach((h) => t.check('heading ' + h, h2.includes(h), h2.join(', ')));
+  const svgs = c.$$('#all svg.kit');
+  t.check('16 compositions', svgs.length === 16, svgs.length);
+  const bad = svgs.filter((s) => /NaN|undefined/.test(s.outerHTML)).length;
+  t.check('no NaN or undefined in the compositions', bad === 0, bad + ' bad');
+  t.check('mix grid holds 16', c.$$('#mix-slide svg.kit').length === 16);
+  t.check('tokens listed', c.$$('#scene .row').length > 20, c.$$('#scene .row').length);
+  const roles = c.$$('#scene .row.is-role');
+  t.check('role tokens are marked', roles.length === 9 && roles.some((r) => /button-visit-fill/.test(r.textContent)), roles.length);
+  t.check('six font roles', c.$$('#fonts .font').length === 6);
+  const active = c.$('#switch a[aria-current="true"]');
+  t.check('configured brand is active', !!active && active.textContent === 'Your brand', active && active.textContent);
+  const before = { swatches: c.$$('#brand .sw').map((e) => e.textContent).join('|'), sets: c.$('#sets').textContent };
+
+  const s = await t.load('/__theme/?brand=sample&still=1');
+  const on = s.$('#switch a[aria-current="true"]');
+  t.check('sample brand is active', !!on && on.textContent === 'Sample brand', on && on.textContent);
+  t.check('brand swatches change', s.$$('#brand .sw').map((e) => e.textContent).join('|') !== before.swatches);
+  t.check('ink sets change', s.$('#sets').textContent !== before.sets);
+  const stats = s.$('#stats').textContent;
+  t.check('sample brand has 0 violations', /Avoided pairs together\s*0\s*0\s*met/.test(stats), stats);
+  t.check('no overridden tags on the sample brand', s.$$('#scene .is-over').length === 0);
+});
+</script>
+</body></html>

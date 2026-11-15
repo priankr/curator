@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>taptargets</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// At phone width every interactive element has a hit area of at least 40 by 40 CSS pixels, measured by probing with elementFromPoint, so a pseudo-element hit area counts.
+H.run('taptargets', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((x) => x.id === site.defaultCollection);
+  const MIN = 40;
+  // Extent of the hit area along one axis through the element's centre, probing up to 30px beyond its box.
+  const extent = (c, el, axis) => {
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const hit = (x, y) => { const e = c.d.elementFromPoint(x, y); return !!e && (e === el || el.contains(e)); };
+    const at = (d) => (axis === 'x' ? hit(cx + d, cy) : hit(cx, cy + d));
+    let lo = 0, hi = 0;
+    for (let d = 0; d > -300 && at(d - 1); d--) lo = d - 1;
+    for (let d = 0; d < 300 && at(d + 1); d++) hi = d + 1;
+    return hi - lo + 1;
+  };
+  // With the menu open the panel covers the chips by design, so that scene measures the menu controls only.
+  const survey = (c, only) => c.tabbable().filter((el) => !only || el.closest(only)).map((el) => {
+    const r = el.getBoundingClientRect();
+    // Scroll the element into view first, so elementFromPoint can reach it.
+    if (r.bottom > c.w.innerHeight || r.top < 0 || r.right > c.w.innerWidth || r.left < 0) el.scrollIntoView({ block: 'center', inline: 'center' });
+    return { name: c.name(el) + (el.textContent.trim() ? ' "' + el.textContent.trim().slice(0, 14) + '"' : ''), w: extent(c, el, 'x'), h: extent(c, el, 'y'), box: Math.round(el.getBoundingClientRect().width) + 'x' + Math.round(el.getBoundingClientRect().height) };
+  });
+  const small = (rows) => rows.filter((r) => r.w < MIN || r.h < MIN).map((r) => r.name + ' hit ' + r.w + 'x' + r.h + ' (box ' + r.box + ')');
+  const scenes = [
+    ['table', '/?still=1', null, 390],
+    ['open screen', '/' + col.id + '/' + col.items[0].id + '/?still=1', 'open', 390],
+    ['open menu', '/?still=1', 'menu', 390],
+    ['table at 360', '/?still=1', null, 360],
+    ['open screen at 360', '/' + col.id + '/' + col.items[0].id + '/?still=1', 'open', 360],
+  ];
+  for (const [label, path, wait, width] of scenes) {
+    const c = await t.load(path, width, 844);
+    if (wait === 'menu') { c.$('.cu-menu-btn').click(); await t.sleep(300); } else if (wait) { await t.waitFor(c.isOpen, 15000); await t.sleep(400); }
+    t.check(label + ': the viewport is phone width', c.w.innerWidth === width, c.w.innerWidth);
+    const rows = survey(c, wait === 'menu' ? '.cu-menu' : null);
+    t.check(label + ': ' + rows.length + ' controls measured', rows.length >= (wait === 'menu' ? 3 : 4), rows.length);
+    const bad = small(rows);
+    t.check(label + ': every control has a hit area of at least 40 by 40', bad.length === 0, bad.join(' | '));
+  }
+});
+</script>
+</body></html>

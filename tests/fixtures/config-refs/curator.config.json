@@ -1,0 +1,24 @@
+{
+  "basic": {
+    "site": {
+      "title": "Sample site",
+      "url": "https://links.example.com",
+      "socialImage": "missing-card.png"
+    },
+    "collections": {
+      "order": [
+        "ghost",
+        "links",
+        "ghost"
+      ],
+      "default": "nope"
+    }
+  },
+  "advanced": {
+    "types": {
+      "podcast": {
+        "label": "Podcast"
+      }
+    }
+  }
+}

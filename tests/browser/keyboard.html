@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>keyboard</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// Arrow keys move focus, Enter opens, Escape returns, Shift+ArrowRight changes the table.
+H.run('keyboard', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((c) => c.id === site.defaultCollection);
+  const next = site.collections[site.collections.findIndex((x) => x.id === col.id) + 1];
+  const c = await t.load('/');
+  const s = c.slides();
+  s[0].focus();
+  c.key('ArrowRight');
+  t.check('ArrowRight moves focus to the second slide', c.d.activeElement === s[1], c.focusName());
+  // A key event dispatched on the document itself has no Element target.
+  const errs = () => c.d.documentElement.dataset.errors || (c.d.body && c.d.body.dataset.errors) || '';
+  const before = errs();
+  c.d.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+  t.check('ArrowRight on the document does not error and moves focus like a slide key', errs() === before && c.d.activeElement === s[2], 'errors=' + errs() + ' ' + c.focusName());
+  c.d.activeElement.blur(); s[1].focus();
+  const enter = c.key('Enter');
+  t.check('Enter is not swallowed', !enter.defaultPrevented, 'defaultPrevented=' + enter.defaultPrevented);
+  // A synthetic Enter does not activate a button, so the browser default action is applied by hand.
+  c.d.activeElement.click();
+  t.check('opens on the second item', await t.waitFor(() => c.isOpen() && c.title() === col.items[1].title, 15000), 'title=' + c.title());
+  c.key('Escape');
+  t.check('closes', await t.waitFor(c.isClosed, 15000), 'hidden=' + c.booth().hidden);
+  await t.sleep(300);
+  t.check('focus is back on the second slide', c.d.activeElement === s[1], c.focusName());
+  t.check('a next collection exists', !!next, '');
+  if (!next) return;
+  c.key('ArrowRight', { init: { shiftKey: true } });
+  t.check('Shift+ArrowRight changes the path to the next collection', await t.waitFor(() => c.path() === '/' + next.id + '/', 5000), c.path());
+  t.check('the next table is on', await t.waitFor(() => c.$('.table.on') && c.$('.table.on').dataset.col === next.id, 5000), c.$('.table.on') && c.$('.table.on').dataset.col);
+});
+</script>
+</body></html>

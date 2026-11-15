@@ -1,0 +1,43 @@
+{
+  "basic": {
+    "site": {
+      "title": "Curator",
+      "description": "Links worth keeping, with notes on why.",
+      "url": "https://links.example.com",
+      "language": "en",
+      "socialImage": "./content/images/social.png"
+    },
+    "collections": {
+      "order": ["product", "repos", "visuals"],
+      "default": "product"
+    },
+    "brand": {
+      "primary": [
+        { "name": "Vermilion", "value": "#e4572e" },
+        { "name": "Ultramarine", "value": "#2b4ea2" },
+        { "name": "Navy", "value": "#17304f" }
+      ],
+      "secondary": [
+        { "name": "Teal", "value": "#0f6e63" },
+        { "name": "Plum", "value": "#5b3a6e" }
+      ],
+      "accent": [
+        { "name": "Marigold", "value": "#f2b134" },
+        { "name": "Salmon", "value": "#f08a7b" }
+      ],
+      "neutral": {
+        "light": "#efe7d3",
+        "dark": "#1d1b18",
+        "surface": "#e6dec8",
+        "muted": "#6f685a"
+      }
+    },
+    "fonts": {
+      "display": "Fraunces",
+      "body": "Archivo",
+      "mono": "IBM Plex Mono",
+      "poster": "Archivo"
+    }
+  },
+  "advanced": {}
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>title</title></head>
+<body style="margin:0;background:#333;color:#eee;font:12px monospace">
+<pre id="R">pending</pre>
+<script src="harness.js"></script>
+<script>
+// On every client side route change document.title equals the title the build wrote into the head of that route's page.
+H.run('title', async (t) => {
+  const site = await t.site();
+  const col = site.collections.find((x) => x.id === site.defaultCollection);
+  const other = site.collections.find((x) => x.id !== col.id);
+  const built = async (path) => new DOMParser().parseFromString(await (await fetch(path)).text(), 'text/html').title;
+  const c = await t.load('/?still=1');
+  // The title is read straight after the route settles, so a stale title shows up as a mismatch.
+  const same = async (label) => {
+    const want = await built(c.path());
+    await t.waitFor(() => c.d.title === want, 3000, 20);
+    t.check(label + ': title matches the built page for ' + c.path(), c.d.title === want, JSON.stringify(c.d.title) + ' vs ' + JSON.stringify(want));
+    return want;
+  };
+  const home = await same('home');
+  t.check('the home title is the site title', home === site.site.title, home);
+
+  c.slides()[0].click();
+  await t.waitFor(c.isOpen, 15000);
+  const open = await same('open');
+  t.check('an item title has the middle dot and the short collection name', open === col.items[0].title + ' \u00b7 ' + col.short, open);
+
+  await t.press('ArrowRight');
+  await t.waitFor(() => c.title() === col.items[1].title, 15000);
+  await same('page');
+
+  await t.press('Escape');
+  await t.waitFor(c.isClosed, 15000);
+  await same('close');
+
+  // A collection in the menu moves to the collection path, which uses the collection format.
+  c.$('.cu-menu-btn').click();
+  c.$('.cu-col[data-col="' + other.id + '"]').click();
+  await t.waitFor(() => c.path() === '/' + other.id + '/', 5000);
+  const coll = await same('switch collection');
+  t.check('a collection title has the middle dot and the site title', coll === other.title + ' \u00b7 ' + site.site.title, coll);
+  c.$('.cu-brand').click();
+  await t.waitFor(() => c.path() === '/' + col.id + '/', 5000);
+  await same('brand link');
+
+  // Titles with quotes and ampersands, reached by a history route change like the back button.
+  const odd = site.collections.flatMap((x) => x.items.map((i) => ({ col: x, item: i }))).filter((x) => /['&"<>]/.test(x.item.title)).slice(0, 2);
+  for (const { col: oc, item } of odd) {
+    c.w.history.pushState(null, '', '/' + oc.id + '/' + item.id + '/?still=1');
+    c.w.dispatchEvent(new c.w.PopStateEvent('popstate'));
+    await t.waitFor(c.isOpen, 15000);
+    const want = await same('route to ' + item.title);
+    t.check('the title keeps the raw characters', want.startsWith(item.title), want);
+    await t.press('Escape');
+    await t.waitFor(c.isClosed, 15000);
+  }
+
+  // The not found route lands on the home page, so the client title is the home title.
+  const nf = await t.load('/nope/?still=1');
+  await t.waitFor(() => nf.path() === '/', 5000);
+  await t.waitFor(() => nf.d.title === site.site.title, 3000, 20);
+  t.check('not found: the title follows the home route', nf.path() === '/' && nf.d.title === site.site.title && nf.d.title === await built('/'), JSON.stringify(nf.d.title) + ' at ' + nf.path());
+  t.check('the built 404 page keeps the Not found title', /^Not found \u00b7 /.test(await built('/nope/')), await built('/nope/'));
+  nf.$('.cu-menu-btn').click();
+  nf.$('.cu-col[data-col="' + other.id + '"]').click();
+  await t.waitFor(() => nf.path() === '/' + other.id + '/', 5000);
+  await t.waitFor(() => nf.d.title !== site.site.title, 3000, 20);
+  t.check('leaving not found sets the collection title', nf.d.title === await built(nf.path()), nf.d.title);
+});
+</script>
+</body></html>
