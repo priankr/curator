@@ -6,7 +6,7 @@ Curator is a retro-inspired way to share collections of links. Every link is a 3
 
 ![Slides on the light table](content/images/curator-1.png)
 
-Click one and it drops into a projector, while a screen rolls down to show the all the slide content, including the notes you've added to the link.
+Click one and it drops into a projector, while a screen rolls down to show all the slide content, including the notes you've added to the link.
 
 ![An open slide on the projector screen](content/images/curator-2.png)
 
