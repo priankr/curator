@@ -9,6 +9,7 @@
 // Text over a gradient cannot be measured against one colour. Each such row is a manual check, reported with its lowest ratio over the gradient stops, and must be listed here with the reason it is accepted.
 const MANUAL = {
   'span.mt.m-white.o-l': 'the white mount has faint 5 percent black stripes over its solid colour, and the lowest ratio over the stripe stops is measured',
+  'body.lt-page': 'the backdrop is a light radial gradient with grain, and the lowest ratio over its stops is measured',
   'div.tb-frame': 'the table frame is a dark vertical gradient, and the lowest ratio over both stops is measured',
   'div.scr-body#scr-body': 'the screen fabric is a dark radial gradient, and the lowest ratio over both stops is measured',
   'div.projector#projector': 'the projector body gradient has a bright highlight band in the top 10px only, so the label at the foot is measured against --projector-body',

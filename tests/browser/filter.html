@@ -42,6 +42,33 @@ H.run('filter', async (t) => {
   t.check('nothing is dimmed after the active tag is clicked again', dimmed() === 0, dimmed());
   t.check('the tag chip is not pressed after the second click', pressed(chip) === 'false', pressed(chip));
   t.check('all is pressed after the second click', pressed(all) === 'true', pressed(all));
+  // The plate says when matches sit on another page, and clears with the filter.
+  const note = c.$('.table.on .tb-more'), size = site.scene.pageSize;
+  const other = col.items.map((i, n) => ({ n, tags: i.tags })).filter((x) => x.n >= size);
+  const far = chips.find((b) => b.dataset.tag && other.some((x) => x.tags.includes(b.dataset.tag)) && col.items.slice(0, size).some((i) => i.tags.includes(b.dataset.tag)));
+  t.check('the note is hidden with no filter', !!note && note.hidden, note && note.hidden);
+  t.check('a tag spans pages', !!far, 'none of the sample tags appears on both the first page and a later one');
+  if (!far || !note) return;
+  far.click();
+  await t.sleep(200);
+  const total = col.items.filter((i) => i.tags.includes(far.dataset.tag)).length;
+  t.check('the note names the count and points to other pages', !note.hidden && note.textContent === 'Tagged: ' + total + '. More on other pages', note.textContent);
+  far.click();
+  await t.sleep(200);
+  t.check('the note clears with the filter', note.hidden, note.hidden);
+  // At phone width the note sits inside the glass above the first slide, wraps if it must, and the table grows to hold it.
+  const p = await t.load('/?still=1', 360, 844);
+  p.$$('.cu-chip').find((b) => b.dataset.tag === far.dataset.tag).click();
+  await t.sleep(400);
+  const rect = (sel) => p.$('.table.on ' + sel).getBoundingClientRect(), n = rect('.tb-more'), g = rect('.tb-glass'), s1 = rect('.slide:not(.off)');
+  t.check('the note sits above the glass inside the frame', n.top >= g.top && n.left >= g.left && n.right <= g.right && n.bottom <= s1.top, [g.top, n.top, n.bottom, s1.top].map(Math.round).join(' '));
+  const gap = () => p.$('.table.on .slide:not(.off)').getBoundingClientRect().top;
+  const before = s1.top;
+  p.$$('.cu-chip')[0].click();
+  await t.sleep(300);
+  t.check('the first slide does not move when the note goes away', Math.abs(gap() - before) < 1 && p.$('.table.on .tb-more').hidden, Math.round(before) + ' ' + Math.round(gap()));
+  const l = p.$('#chips-l'), r = p.$('#chips-r'), ch = p.$$('.cu-chip')[1], mid = (e) => e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2;
+  t.check('both tag chevrons show and sit level with the tags', !l.hidden && !r.hidden && Math.abs(mid(l) - mid(ch)) < 1 && Math.abs(mid(r) - mid(ch)) < 1, Math.round(mid(l)) + ' ' + Math.round(mid(r)) + ' ' + Math.round(mid(ch)));
 });
 </script>
 </body></html>

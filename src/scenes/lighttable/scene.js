@@ -2,11 +2,14 @@
 const MARKUP = `<div class="lt-room" id="room">
   <div class="lt-rail" id="rail"></div>
 </div>
-<div class="lt-scrim"></div>
 <div class="cu-head" id="head">
   <h1 id="h-title"></h1>
   <p id="h-desc"></p>
-  <div class="cu-chips" id="chips" role="group" aria-label="Filter by tag"></div>
+  <div class="cu-chipbar">
+    <button type="button" class="cu-more cu-more-l" id="chips-l" aria-label="Show earlier tags" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="cu-chips" id="chips" role="group" aria-label="Filter by tag"></div>
+    <button type="button" class="cu-more cu-more-r" id="chips-r" aria-label="Show more tags" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
 </div>
 <button type="button" class="cu-arrow side side-l" id="prev-col" aria-label="Previous table" aria-disabled="false"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
 <button type="button" class="cu-arrow side side-r" id="next-col" aria-label="Next table" aria-disabled="false"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -39,6 +42,17 @@ export async function mount(app, site, C) {
   app.insertAdjacentHTML('beforeend', MARKUP);
   const room = $('#room'), rail = $('#rail'), head = $('#head'), chips = $('#chips');
   C.chrome.mount();
+  /* on phones the tag row scrolls sideways: edge fades and a button on each side show where more tags are. The buttons keep their space once shown, so scrolling never resizes the row. */
+  const chipL = $('#chips-l'), chipR = $('#chips-r');
+  function chipEdges() {
+    const max = chips.scrollWidth - chips.clientWidth, x = chips.scrollLeft, l = x > 2, r = x < max - 2, on = max > 2 || !chipL.hidden;
+    chipL.hidden = chipR.hidden = !on; chipL.style.visibility = l ? '' : 'hidden'; chipR.style.visibility = r ? '' : 'hidden'; chips.dataset.fade = (l ? 'l' : '') + (r ? 'r' : '');
+  }
+  const chipScroll = (d) => chips.scrollBy({ left: d * chips.clientWidth * 0.7, behavior: C.reduced ? 'auto' : 'smooth' });
+  chipL.onclick = () => chipScroll(-1); chipR.onclick = () => chipScroll(1);
+  chips.addEventListener('scroll', chipEdges, { passive: true });
+  if ('ResizeObserver' in window) new ResizeObserver(chipEdges).observe(chips);
+  window.addEventListener('resize', chipEdges);
 
   /* ---------- slides ---------- */
   const PAGE_SIZE = site.scene.pageSize;
@@ -62,7 +76,7 @@ export async function mount(app, site, C) {
   const start = colOf(C.route().col).index, defer = (html, ci) => (ci === start ? html : html.replace(/<img([^>]*?) src="/g, '<img$1 data-src="'));
   const wake = (im) => { if (im.dataset.src) { im.src = im.dataset.src; im.removeAttribute('data-src'); } };
   const seen = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { wake(e.target); seen.unobserve(e.target); } })) : null;
-  rail.innerHTML = cols.map((col, ci) => '<section class="table" data-col="' + col.id + '" aria-label="' + esc(col.title) + '"><div class="tb-frame"><i class="screw a"></i><i class="screw b"></i><i class="screw c"></i><i class="screw d"></i><div class="tb-glass"><div class="slides">' +
+  rail.innerHTML = cols.map((col, ci) => '<section class="table" data-col="' + col.id + '" aria-label="' + esc(col.title) + '"><div class="tb-frame"><i class="screw a"></i><i class="screw b"></i><i class="screw c"></i><i class="screw d"></i><div class="tb-glass"><div class="tb-more" role="status" hidden></div><div class="slides">' +
     col.items.map((it, i) => '<button type="button" class="slide t-' + it.type + '" data-i="' + i + '" style="--r:' + C.num(it, 'rot', -4.5, 4.5).toFixed(2) + 'deg;--dx:' + C.num(it, 'dx', -7, 7).toFixed(1) + 'px;--dy:' + C.num(it, 'dy', -7, 7).toFixed(1) + 'px" aria-label="' + esc(it.title) + ', ' + esc(C.typeLabel(it.type).toLowerCase()) + ' from ' + esc(it.domain) + '">' + defer(slideHTML(it), ci) + '</button>').join('') +
     '</div></div><div class="tb-plate"><span class="tb-name"><b>' + esc(col.short) + '</b><span class="tb-rng"></span></span><span class="tb-pager"><button type="button" class="pj-btn tb-pg" data-d="-1" aria-label="Previous page of slides"><i aria-hidden="true"></i></button><button type="button" class="pj-btn pj-next tb-pg" data-d="1" aria-label="Next page of slides"><i aria-hidden="true"></i></button></span></div></div></section>').join('');
   const tables = [...rail.querySelectorAll('.table')], slides = tables.map((t) => [...t.querySelectorAll('.slide')]);
@@ -71,10 +85,16 @@ export async function mount(app, site, C) {
   /* ---------- pages: a table shows PAGE_SIZE slides at a time. Slides keep their place in slides[ci], the others are hidden. ---------- */
   const pageOf = cols.map(() => 0), pageCount = (ci) => Math.max(1, Math.ceil(cols[ci].items.length / PAGE_SIZE)), pageFor = (item) => Math.floor(item.index / PAGE_SIZE);
   let paging = false;
+  /* a tag filter dims slides per page, so the plate says when matches sit on another page */
+  function tagNote(ci) {
+    const items = cols[ci].items, total = items.filter(C.matches).length, lo = pageOf[ci] * PAGE_SIZE, here = items.slice(lo, lo + PAGE_SIZE).filter(C.matches).length;
+    const note = tables[ci].querySelector('.tb-more'); note.textContent = total < items.length && total > here ? 'Tagged: ' + total + '. More on other pages' : ''; note.hidden = !note.textContent;
+  }
   function showPage(ci, p) {
     pageOf[ci] = p; const lo = p * PAGE_SIZE, hi = lo + PAGE_SIZE, n = cols[ci].items.length, t = tables[ci];
     slides[ci].forEach((s, i) => s.classList.toggle('off', i < lo || i >= hi));
     t.querySelector('.tb-rng').textContent = pageCount(ci) > 1 ? (lo + 1) + ' to ' + Math.min(hi, n) + ' of ' + n : n + ' slides';
+    tagNote(ci);
     t.querySelectorAll('.tb-pg').forEach((b) => b.setAttribute('aria-disabled', String(b.dataset.d < 0 ? p === 0 : p >= pageCount(ci) - 1)));
   }
   /* every glass gets the height of a full page at this layout, from a real slide box, the grid gaps and the column count */
@@ -111,7 +131,9 @@ export async function mount(app, site, C) {
     tables.forEach((t, i) => { t.classList.toggle('on', i === ci); t.querySelector('.slides').inert = i !== ci; t.querySelector('.tb-plate').inert = i !== ci; });
     if (instant) { rail.classList.add('no-anim'); requestAnimationFrame(() => requestAnimationFrame(() => rail.classList.remove('no-anim'))); }
     $('#h-title').textContent = col.title; $('#h-desc').textContent = col.description;
-    C.mountTags(chips, col, () => slides[ci].forEach((s, i) => s.classList.toggle('dim', !C.matches(col.items[i]))));
+    slides.forEach((list, i) => { if (i !== ci) { list.forEach((s) => s.classList.remove('dim')); tables[i].querySelector('.tb-more').hidden = true; } }); /* the filter resets with the table */
+    C.mountTags(chips, col, () => { slides[ci].forEach((s, i) => s.classList.toggle('dim', !C.matches(col.items[i]))); tagNote(ci); });
+    chips.scrollLeft = 0; chipL.hidden = chipR.hidden = true; chipEdges();
     C.chrome.mark(col.id); $('#prev-col').setAttribute('aria-disabled', String(ci === 0)); $('#next-col').setAttribute('aria-disabled', String(ci === cols.length - 1));
     room.scrollTo({ top: 0, behavior: instant || C.reduced ? 'auto' : 'smooth' });
     layout();

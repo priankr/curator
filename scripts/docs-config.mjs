@@ -109,7 +109,7 @@ export function generate() {
   };
   const nonRole = tokens.filter((t) => !ROLE_TOKENS.includes(t.name));
   const pick = (n) => (nonRole.find((t) => t.name === n) ?? nonRole[0]).name;
-  const override = { advanced: { scene: { colors: { [pick('page-room')]: '#101820', [pick('glass-center')]: 'rgba(255, 255, 255, 0.9)' } } } };
+  const override = { advanced: { scene: { colors: { [pick('page-room')]: '#d8d4c2', [pick('glass-center')]: 'rgba(255, 255, 255, 0.9)' } } } };
   const bigTypes = { advanced: { types: { repo: { label: 'Project', dot: 'accent.1' } } } };
 
   const out = [];

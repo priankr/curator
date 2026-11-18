@@ -1,10 +1,12 @@
 /* Curator scene: light table and projector. Colour tokens first, grouped by object. */
 :root {
-  --page-room: #0e0f11; /* Room backdrop behind the tables, and the scrim under the heading */
-  --page-room-glow: rgba(236, 242, 214, .07); /* Soft light pooled in the middle of the room */
+  --page-room: #d9d0ba; /* Backdrop behind the tables and the heading */
+  --page-room-glow: #e9e1cd; /* Lit top centre of the backdrop */
+  --page-room-edge: #c9bea4; /* Darker edges of the backdrop */
   --page-scrollbar: #3a3c40; /* Scrollbar thumb of the room */
   --page-booth-center: rgba(22, 20, 17, .93); /* Dimmed room behind the projector, near the bottom centre */
   --page-booth-edge: rgba(4, 4, 5, .985); /* Dimmed room behind the projector, towards the edges */
+  --page-booth-base: #060607; /* Solid colour under the dimmed room behind the projector */
   --table-frame-top: #414347; /* Top of the light table frame */
   --table-frame-bottom: #1d1e21; /* Bottom of the light table frame */
   --table-screw-light: #c9c9c5; /* Highlight on the frame screws */
@@ -74,15 +76,14 @@
   --button-icon: #141416; /* Arrow on the paging buttons */
   --button-focus: #ffb27d; /* Keyboard focus ring on the paging buttons */
 }
-.lt-page { background: var(--page-room); --tw: min(1180px, calc(100vw - 130px)); }
-.lt-room { position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--page-scrollbar) transparent; background: radial-gradient(80% 50% at 50% 55%, var(--page-room-glow), transparent 70%), var(--page-room); }
-.lt-scrim { position: fixed; inset: 0 0 auto 0; height: calc(var(--headH, 190px) + 30px); z-index: 20; pointer-events: none; background: linear-gradient(180deg, var(--page-room) 0, var(--page-room) calc(100% - 34px), transparent); }
-.lt-rail { --gap: max(40px, calc((100vw - var(--tw)) / 2 + 130px)); display: flex; gap: var(--gap); align-items: flex-start; width: max-content; padding: calc(var(--headH, 190px) + 24px) calc((100vw - var(--tw)) / 2) 0; transform: translateX(var(--rx, 0px)); transition: transform .95s var(--ease-io); }
+.lt-page { background-color: var(--page-room); background-image: var(--grain, none), radial-gradient(120% 80% at 50% 0%, var(--page-room-glow) 0%, var(--page-room) 70%, var(--page-room-edge) 100%); background-size: 128px, auto; --tw: min(1180px, calc(100vw - 130px)); }
+.lt-room { position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--page-scrollbar) transparent; -webkit-mask-image: linear-gradient(180deg, transparent calc(var(--headH, 190px) - 4px), #000 calc(var(--headH, 190px) + 30px)); mask-image: linear-gradient(180deg, transparent calc(var(--headH, 190px) - 4px), #000 calc(var(--headH, 190px) + 30px)); } /* slides fade out under the heading */
+.lt-rail { --gap: max(40px, calc((100vw - var(--tw)) / 2 + 130px)); display: flex; gap: var(--gap); align-items: flex-start; width: max-content; padding: calc(var(--headH, 190px) + var(--head-gap)) calc((100vw - var(--tw)) / 2) 0; transform: translateX(var(--rx, 0px)); transition: transform .95s var(--ease-io); }
 .lt-rail.no-anim { transition: none; }
 .lt-rail::after { content: ''; }
 .table { flex: none; width: var(--tw); padding-bottom: 70px; cursor: pointer; }
 .table.on { cursor: default; }
-.tb-frame { position: relative; padding: 16px 16px 48px; border-radius: 11px; background: linear-gradient(180deg, var(--table-frame-top), var(--table-frame-bottom)); box-shadow: 0 34px 60px -24px #000, inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 0 0 1px rgba(0, 0, 0, .6); }
+.tb-frame { position: relative; padding: 16px 16px 48px; border-radius: 11px; background-color: var(--table-frame-bottom); background-image: linear-gradient(180deg, var(--table-frame-top), var(--table-frame-bottom)); box-shadow: 0 34px 60px -24px #000, inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 0 0 1px rgba(0, 0, 0, .6); }
 .screw { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--table-screw-light), var(--table-screw-dark) 70%); box-shadow: 0 1px 1px #000; }
 .screw.a { left: 5px; top: 5px; } .screw.b { right: 5px; top: 5px; } .screw.c { left: 5px; bottom: 5px; } .screw.d { right: 5px; bottom: 5px; }
 .tb-glass { position: relative; min-height: calc(100vh - 380px); border-radius: 3px; background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, .7) 20%, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, .7) 70%, rgba(255, 255, 255, 0) 100%), repeating-linear-gradient(90deg, transparent 0 59px, var(--glass-grid) 59px 60px), repeating-linear-gradient(180deg, transparent 0 59px, var(--glass-grid) 59px 60px), radial-gradient(120% 100% at 50% 45%, var(--glass-center), var(--glass-edge) 85%); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .6), inset 0 0 50px var(--glass-inner-glow), 0 0 110px var(--glass-halo); transition: filter .9s; }
@@ -93,12 +94,14 @@
 .tb-plate { position: absolute; left: 20px; right: 20px; bottom: 10px; height: 28px; display: flex; justify-content: space-between; align-items: center; }
 .tb-name { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--table-plate-text); }
 .tb-name b { margin-right: 12px; font-family: var(--f-sans); font-weight: 800; font-size: 12px; letter-spacing: .22em; color: var(--table-plate-title); }
+.tb-more { position: absolute; z-index: 2; top: 8px; left: 0; right: 0; width: fit-content; max-width: calc(100% - 16px); margin: 0 auto; padding: 6px 14px; border-radius: 999px; text-align: center; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em; line-height: 1.3; color: var(--chrome-chip-on-text); background: var(--chrome-chip-on-fill); } /* sits in the slides' top padding, which always holds its room */
+.tb-more[hidden] { display: none; }
 .tb-pager { display: flex; gap: 10px; }
 .tb-pager .pj-btn { width: 30px; height: 30px; border-radius: 4px; }
 .tb-pager .pj-btn i { width: 10px; height: 12px; }
 .tb-pager .pj-btn::after { content: ''; position: absolute; inset: -5px; }
 
-.slides { display: grid; align-content: start; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 30px 22px; justify-items: center; align-items: center; padding: 40px 36px 46px; }
+.slides { display: grid; align-content: start; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 30px 22px; justify-items: center; align-items: center; padding: 52px 36px 46px; }
 .slide { position: relative; display: block; width: 100%; max-width: 168px; aspect-ratio: 1; container-type: size; transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--r, 0deg)); transition: transform .3s var(--ease), opacity .4s, filter .4s; cursor: pointer; }
 .table.on .slide:hover, .slide:focus-visible { z-index: 2; transform: translate(var(--dx, 0px), calc(var(--dy, 0px) - 6px)) rotate(0deg) scale(1.09); }
 .slide:focus-visible { outline: 3px solid var(--table-slide-focus); outline-offset: 5px; }
@@ -129,7 +132,7 @@
 
 
 /* projector booth */
-.booth { position: fixed; inset: 0; z-index: 60; }
+.booth { position: fixed; inset: 0; z-index: 60; background-color: var(--page-booth-base); }
 .bt-dark { position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 100%, var(--page-booth-center), var(--page-booth-edge) 70%); cursor: zoom-out; }
 .bt-close { position: absolute; z-index: 8; bottom: 24px; right: 20px; }
 .beam { position: absolute; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .25s; mix-blend-mode: screen; background: linear-gradient(0deg, var(--beam-base), var(--beam-tip)); clip-path: polygon(3% 0, 97% 0, calc(var(--lens, 50%) + 2.5%) 100%, calc(var(--lens, 50%) - 2.5%) 100%); }
@@ -188,7 +191,8 @@
 @media (max-width: 700px) {
   .lt-page { --tw: calc(100vw - 20px); }
   .tb-frame { padding: 10px 10px 44px; }
-  .slides { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; padding: 24px 14px 30px; }
+  .tb-more { font-size: 11px; top: 6px; }
+  .slides { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; padding: 46px 14px 30px; }
   .lt-page .side { top: auto; bottom: 14px; }
   .projector { height: 62px; }
   .pj-pad { top: 6px; left: 90px; }

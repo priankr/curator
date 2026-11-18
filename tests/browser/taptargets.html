@@ -22,8 +22,8 @@ H.run('taptargets', async (t) => {
   // With the menu open the panel covers the chips by design, so that scene measures the menu controls only.
   const survey = (c, only) => c.tabbable().filter((el) => !only || el.closest(only)).map((el) => {
     const r = el.getBoundingClientRect();
-    // Scroll the element into view first, so elementFromPoint can reach it.
-    if (r.bottom > c.w.innerHeight || r.top < 0 || r.right > c.w.innerWidth || r.left < 0) el.scrollIntoView({ block: 'center', inline: 'center' });
+    // Scroll the element into view first, so elementFromPoint can reach it. Tags always scroll, because the row clips them.
+    if (el.closest('.cu-chips') || r.bottom > c.w.innerHeight || r.top < 0 || r.right > c.w.innerWidth || r.left < 0) el.scrollIntoView({ block: 'center', inline: 'center' });
     return { name: c.name(el) + (el.textContent.trim() ? ' "' + el.textContent.trim().slice(0, 14) + '"' : ''), w: extent(c, el, 'x'), h: extent(c, el, 'y'), box: Math.round(el.getBoundingClientRect().width) + 'x' + Math.round(el.getBoundingClientRect().height) };
   });
   const small = (rows) => rows.filter((r) => r.w < MIN || r.h < MIN).map((r) => r.name + ' hit ' + r.w + 'x' + r.h + ' (box ' + r.box + ')');

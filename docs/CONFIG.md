@@ -242,7 +242,7 @@ Every colour in the light table scene is a token with a default. Override any to
   "advanced": {
     "scene": {
       "colors": {
-        "page-room": "#101820",
+        "page-room": "#d8d4c2",
         "glass-center": "rgba(255, 255, 255, 0.9)"
       }
     }
@@ -259,18 +259,22 @@ Tokens marked brand-driven cannot be overridden. They follow `basic.brand` so th
 | Token | Default | Colours |
 |-------|---------|---------|
 | `page-bg` | `#17140f` | Page background behind the scene |
-| `page-room` | `#0e0f11` | Room backdrop behind the tables, and the scrim under the heading |
-| `page-room-glow` | `rgba(236, 242, 214, .07)` | Soft light pooled in the middle of the room |
+| `page-room` | `#d9d0ba` | Backdrop behind the tables and the heading |
+| `page-room-glow` | `#e9e1cd` | Lit top centre of the backdrop |
+| `page-room-edge` | `#c9bea4` | Darker edges of the backdrop |
 | `page-scrollbar` | `#3a3c40` | Scrollbar thumb of the room |
 | `page-booth-center` | `rgba(22, 20, 17, .93)` | Dimmed room behind the projector, near the bottom centre |
 | `page-booth-edge` | `rgba(4, 4, 5, .985)` | Dimmed room behind the projector, towards the edges |
+| `page-booth-base` | `#060607` | Solid colour under the dimmed room behind the projector |
 
 ### `chrome`
 
 | Token | Default | Colours |
 |-------|---------|---------|
 | `chrome-ink` | `#f1e9d6` | Text and icons on the top bar, collection heading, chips and arrows |
-| `chrome-dim` | `rgba(241, 233, 214, .62)` | Quiet text on the top bar and collection heading |
+| `chrome-dim` | `rgba(241, 233, 214, .62)` | Quiet text on dark chrome |
+| `chrome-chip-fill` | `#1d1e20` | Fill of a tag filter chip and the menu button |
+| `chrome-chip-hover` | `#36373b` | Fill of a chip or the menu button on hover |
 | `chrome-pill-on-fill` (brand-driven) | `#f2b134` | Fill of the active collection menu item, follows accent 1 else primary 1 |
 | `chrome-pill-on-text` (brand-driven) | `#1d1b18` | Text of the active collection menu item, the neutral that reads best on it |
 | `chrome-chip-on-fill` | `#f2b134` | Fill of a pressed tag filter chip |
@@ -395,6 +399,13 @@ Tokens marked brand-driven cannot be overridden. They follow `basic.brand` so th
 | `projector-knob-ring` | `#0c0c0d` | Ring around the projector knob |
 | `projector-power-icon` | `#e4e5e8` | Power symbol on the projector knob |
 | `projector-pad` | `#09090a` | Recess that holds the projector buttons |
+
+### `head`
+
+| Token | Default | Colours |
+|-------|---------|---------|
+| `head-ink` | `#1d1b18` | Wordmark and collection title on the backdrop |
+| `head-dim` | `rgba(29, 27, 24, .82)` | Collection description and the wordmark's quiet text on the backdrop |
 
 ## More
 
