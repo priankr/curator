@@ -42,7 +42,7 @@ Node 20 or newer. Never add runtime dependencies. Dev dependencies need a clear 
 - **Plain JavaScript:** ES modules only, with no framework, bundler or TypeScript.
 - **Shared modules:** `src/js/types.js`, `seed.js`, `palette.js`, `kit.js` and `title.js` run in both the browser and Node, so they must not touch the DOM or import `node:` modules.
 - **Design values:** every colour, font and timing comes from config or a CSS custom property with a default. Never hard-code a new colour in a component.
-- **Brand neutrality:** never name a real company or brand in code, tests or docs. Example brands are called "Sample brand".
+- **Brand neutrality:** never name a real company or brand in code, tests or docs. Example brands are called "Sample brand". The one exception is the hosting example in `docs/DEPLOY.md`, which may name the host.
 - **Copy:** visible text and documentation never use em dashes, en dashes or semicolons. Use commas, colons or separate sentences.
 - **Markdown docs:** softwrap them, with each paragraph as one line.
 - **Cross references:** when a link points to a section of another doc, name the section in the link text, for example [Domains in DEPLOY.md](docs/DEPLOY.md#domains). Never link the same file twice with bare file names.

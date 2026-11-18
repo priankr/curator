@@ -50,6 +50,20 @@ By default the site loads its fonts from Google Fonts, set by `advanced.fonts.so
 
 If the download fails, the build prints a warning and the site falls back to system fonts. It does not fail.
 
+## Example: Vercel
+
+This example deploys a site to a free address on Vercel. Other hosts follow the same pattern with the settings from [What Any Static Host Needs](#what-any-static-host-needs).
+
+1. Sign in to Vercel with your Git host account.
+2. Choose Add New, then Project, and import your repo.
+3. Set Project Name to the name you want. The free address is `<name>.vercel.app`. If the name is taken, Vercel assigns a random address instead, so check the Domains tab in Project Settings after the first deploy.
+4. Set Application Preset to Other. Under Build and Output Settings, turn on Override for Build Command and enter `npm run build`. Turn on Override for Output Directory and enter `dist`. Leave Install Command alone.
+5. Click Deploy.
+6. Set `basic.site.url` in `curator.config.json` to your address, for example `https://curator-demo.vercel.app`, then commit and push. Vercel rebuilds on its own.
+7. Run the checks in [Check the Live Site](#check-the-live-site).
+
+The repo includes a `vercel.json` that holds the same build settings. Once it is on your main branch it takes priority over the dashboard, so change build settings there. Vercel serves `404.html` and every route folder without extra rules, so you need no rewrites.
+
 ## Check the Live Site
 
 Run these checks on your live domain after the first deploy, and again whenever you change the domain or `basic.site.url`. Use one of your own collections and one of its items.

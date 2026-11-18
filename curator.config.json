@@ -3,7 +3,7 @@
     "site": {
       "title": "Curator",
       "description": "Links worth keeping, with notes on why.",
-      "url": "https://links.example.com",
+      "url": "https://curator-demo.vercel.app",
       "language": "en",
       "socialImage": "./content/images/social.png"
     },
