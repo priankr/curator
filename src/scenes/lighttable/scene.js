@@ -157,8 +157,12 @@ export async function mount(app, site, C) {
     $('#pj-prev').setAttribute('aria-disabled', item.index === 0 ? 'true' : 'false');
     $('#pj-next').setAttribute('aria-disabled', item.index === cols[ci].items.length - 1 ? 'true' : 'false');
   }
+  /* a poster's clip paths are found by id, and the copy would otherwise resolve to the hidden slide's, whose clip is empty */
+  function uniqueIds(html) {
+    return [...html.matchAll(/ id="([^"]+)"/g)].reduce((s, m) => s.split('id="' + m[1] + '"').join('id="' + m[1] + '-fly"').split('url(#' + m[1] + ')').join('url(#' + m[1] + '-fly)'), html);
+  }
   function geom(el) {
-    const r = el.getBoundingClientRect(); fly.innerHTML = el.innerHTML; fly.className = 'fly ' + el.className; fly.classList.remove('dim', 'gone', 'off');
+    const r = el.getBoundingClientRect(); fly.innerHTML = uniqueIds(el.innerHTML); fly.className = 'fly ' + el.className; fly.classList.remove('dim', 'gone', 'off');
     fly.style.cssText = 'left:' + (r.left + r.width / 2 - el.offsetWidth / 2) + 'px;top:' + (r.top + r.height / 2 - el.offsetHeight / 2) + 'px;width:' + el.offsetWidth + 'px;height:' + el.offsetHeight + 'px;';
     const slot = $('#pj-slot').getBoundingClientRect(), k = Math.min(0.5, 64 / el.offsetWidth);
     const fx = r.left + r.width / 2, fy = r.top + r.height / 2, tx = slot.left + slot.width / 2 - fx, ty = slot.top - el.offsetHeight * k / 2 - 10 - fy;

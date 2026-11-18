@@ -22,6 +22,17 @@ H.run('click', async (t) => {
   t.check('booth is hidden after Escape', closed, 'hidden=' + c.booth().hidden);
   t.check('path is the table path', c.path() === '/' || c.path() === '/' + col.id + '/', c.path());
   t.check('focus is back on the same slide', c.d.activeElement === slide, c.focusName());
+  // A poster slide's clip paths must keep unique ids while its copy flies, or the art is clipped away.
+  const pc = site.collections.find((x) => x.items.some((i) => i.poster));
+  if (pc) {
+    const pi = pc.items.findIndex((i) => i.poster), p = await t.load('/' + pc.id + '/');
+    p.slides()[pi].click();
+    await t.sleep(120);
+    const ids = [...p.d.querySelectorAll('[id]')].map((e) => e.id), dup = ids.filter((id, n) => ids.indexOf(id) !== n);
+    t.check('no id is used twice while a poster slide flies', dup.length === 0, dup.slice(0, 4).join(' '));
+    const fly = p.$('.fly');
+    t.check('the flying poster keeps its clip paths', !!fly && [...fly.querySelectorAll('[clip-path]')].every((g) => p.d.querySelector(g.getAttribute('clip-path').slice(5, -1).replace(/^/, '#')) && p.d.querySelector(g.getAttribute('clip-path').slice(5, -1).replace(/^/, '#')).closest('.fly')), fly ? fly.querySelectorAll('[clip-path]').length + ' clipped groups' : 'no fly');
+  }
 });
 </script>
 </body></html>
